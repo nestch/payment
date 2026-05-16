@@ -1,0 +1,63 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=dev
+      - JWT_SECRET=${JWT_KEY:-nestch}
+      - JWT_ALGORITHM=${ALGORITHM:-HS256}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=payments
+      - DB_USER=payments
+      - DB_PASSWORD=payments
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=payments
+      - RABBITMQ_PASS=payments
+    depends_on:
+      - rabbitmq
+      - db
+
+  worker:
+    build: .
+    command: ["python", "-m", "app.workers.payment_worker"]
+    environment:
+      - APP_ENV=dev
+      - JWT_SECRET=${JWT_KEY:-nestch}
+      - JWT_ALGORITHM=${ALGORITHM:-HS256}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=payments
+      - DB_USER=payments
+      - DB_PASSWORD=payments
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=payments
+      - RABBITMQ_PASS=payments
+    depends_on:
+      - rabbitmq
+      - db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=payments
+      - RABBITMQ_DEFAULT_PASS=payments
+      - RABBITMQ_DEFAULT_VHOST=/
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=payments
+      - MYSQL_USER=payments
+      - MYSQL_PASSWORD=payments
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+    command: ["--default-authentication-plugin=mysql_native_password"]

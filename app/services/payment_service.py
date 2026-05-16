@@ -1,0 +1,63 @@
+import hashlib
+import uuid
+from decimal import Decimal
+
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.messaging.rabbitmq import publish_message
+from app.models.payment import Payment, PaymentMethod, PaymentStatus
+
+
+def _make_idempotency_key(user_id: int, amount: Decimal, currency: str, method: str) -> str:
+    raw = f"{user_id}:{amount}:{currency}:{method}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def create_payment_and_enqueue(
+    db: Session,
+    channel,
+    *,
+    user_id: int,
+    amount: Decimal,
+    currency: str,
+    method: str,
+) -> Payment:
+    idempotency_key = _make_idempotency_key(user_id, amount, currency, method)
+
+    existing = db.query(Payment).filter(Payment.idempotency_key == idempotency_key).one_or_none()
+    if existing is not None:
+        return existing
+
+    payment = Payment(
+        user_id=user_id,
+        amount=amount,
+        currency=currency,
+        status=PaymentStatus.PENDING,
+        method=PaymentMethod(method),
+        transaction_id=None,
+        idempotency_key=idempotency_key,
+    )
+
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    message_id = str(uuid.uuid4())
+    correlation_id = str(payment.id)
+
+    publish_message(
+        channel,
+        routing_key=settings.rabbitmq_queue,
+        payload={
+            "payment_id": payment.id,
+            "user_id": payment.user_id,
+            "amount": str(payment.amount),
+            "currency": payment.currency,
+            "method": payment.method.value,
+        },
+        message_id=message_id,
+        correlation_id=correlation_id,
+    )
+
+    return payment
