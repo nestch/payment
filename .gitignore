@@ -6,8 +6,8 @@ __pycache__/
 # Virtualenv
 venv/
 .venv/
-# ENV/
-# env/
+ENV/
+env/
 
 # Packaging / build
 build/
@@ -27,4 +27,4 @@ htmlcov/
 
 # OS
 .DS_Store
-# .env
+.env
