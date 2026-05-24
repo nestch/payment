@@ -26,6 +26,13 @@ class Settings(BaseSettings):
 
     rabbitmq_prefetch: int = 20
 
+    stripe_secret_key: str = ""
+    stripe_public_key: str = ""
+    stripe_webhook_secret: str = ""
+
+    stripe_success_url: str = "http://localhost:3000/payment/success?payment_id={CHECKOUT_SESSION_ID}"
+    stripe_cancel_url: str = "http://localhost:3000/payment/cancel"
+
     @property
     def sqlalchemy_database_url(self) -> str:
         return (

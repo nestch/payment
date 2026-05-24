@@ -30,5 +30,19 @@ class PaymentRead(BaseModel):
     transaction_id: str | None
 
 
+class StripeCheckoutCreateRequest(BaseModel):
+    user_id: int = Field(gt=0)
+    credits: int = Field(gt=0)
+    currency: str = Field(default="BRL", min_length=3, max_length=3)
+
+
+class StripeCheckoutCreateResponse(BaseModel):
+    payment_id: int
+    status: PaymentStatus
+    checkout_url: str
+    stripe_session_id: str
+    payment_intent: str | None
+
+
 class HealthResponse(BaseModel):
     status: str

@@ -1,15 +1,30 @@
+import uuid
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
 from app.messaging.rabbitmq import ensure_topology, get_connection
-from app.schemas.payments import PaymentCreateRequest, PaymentCreateResponse, PaymentRead
+from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.schemas.payments import (
+    PaymentCreateRequest,
+    PaymentCreateResponse,
+    PaymentRead,
+    StripeCheckoutCreateRequest,
+    StripeCheckoutCreateResponse,
+)
 from app.security.jwt import require_auth
 from app.services.payment_service import create_payment_and_enqueue
-from app.models.payment import Payment
+from app.services.stripe_service import create_checkout_session
 
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+_CREDIT_PACKAGES: dict[int, Decimal] = {
+    50: Decimal("50.00"),
+}
 
 
 @router.post("", response_model=PaymentCreateResponse)
@@ -59,4 +74,55 @@ def get_payment(
         status=payment.status.value,
         method=payment.method.value,
         transaction_id=payment.transaction_id,
+    )
+
+
+@router.post("/stripe/checkout", response_model=StripeCheckoutCreateResponse)
+def create_stripe_checkout(
+    req: StripeCheckoutCreateRequest,
+    _payload: dict = Depends(require_auth),
+    db: Session = Depends(get_db_session),
+):
+    amount = _CREDIT_PACKAGES.get(req.credits)
+    if amount is None:
+        raise HTTPException(status_code=400, detail="Unsupported credits package")
+
+    payment = Payment(
+        user_id=req.user_id,
+        amount=amount,
+        currency=req.currency,
+        status=PaymentStatus.PENDING,
+        method=PaymentMethod.CREDIT_CARD,
+        transaction_id=None,
+        idempotency_key=uuid.uuid4().hex,
+    )
+
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    try:
+        session = create_checkout_session(
+            payment_id=payment.id,
+            user_id=req.user_id,
+            amount=amount,
+            currency=req.currency,
+            credits=req.credits,
+            idempotency_key=payment.idempotency_key,
+        )
+    except Exception as exc:
+        db.delete(payment)
+        db.commit()
+        raise HTTPException(status_code=500, detail="Failed to create Stripe session") from exc
+
+    payment.transaction_id = session.id
+    db.add(payment)
+    db.commit()
+
+    return StripeCheckoutCreateResponse(
+        payment_id=payment.id,
+        status=payment.status.value,
+        checkout_url=session.url,
+        stripe_session_id=session.id,
+        payment_intent=session.payment_intent,
     )
