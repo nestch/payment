@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `payments` (
+CREATE TABLE IF NOT EXISTS `paymentsTable` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL,
   `amount` DECIMAL(10,2) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
   KEY `ix_payments_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `credits_ledger` (
+CREATE TABLE IF NOT EXISTS `creditsLedger` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL,
   `payment_id` BIGINT NOT NULL,

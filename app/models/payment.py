@@ -23,7 +23,7 @@ class PaymentMethod(str, enum.Enum):
 
 
 class Payment(Base):
-    __tablename__ = "payments"
+    __tablename__ = "paymentsTable"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
