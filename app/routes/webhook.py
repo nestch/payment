@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db_session
 from app.models.payment import Payment, PaymentStatus
 from app.services.stripe_service import construct_webhook_event
+from app.services.zavu_service import notify_payment_confirmed, notify_payment_failed
 
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -115,9 +116,12 @@ async def stripe_webhook(
                 {"payment_id": payment.id},
             )
 
+        notify_payment_confirmed(payment.id, payment.amount, payment.currency)
+
     elif event_type in {"checkout.session.async_payment_failed", "payment_intent.payment_failed"}:
         # Falha no pagamento
         payment.status = PaymentStatus.FAILED
+        notify_payment_failed(payment.id)
 
     elif event_type in {"checkout.session.expired"}:
         # Sessão expirada (usuário não concluiu)

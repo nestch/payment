@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     stripe_success_url: str = "http://localhost:3000/payment/success?payment_id={CHECKOUT_SESSION_ID}"
     stripe_cancel_url: str = "http://localhost:3000/payment/cancel"
 
+    zavu_enabled: bool = False
+    zavu_api_key: str = ""
+    zavu_notify_numbers: str = ""
+
+    @property
+    def zavu_notify_numbers_list(self) -> list[str]:
+        return [n.strip() for n in self.zavu_notify_numbers.split(",") if n.strip()]
+
     @property
     def sqlalchemy_database_url(self) -> str:
         return (
