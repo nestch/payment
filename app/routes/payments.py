@@ -1,5 +1,6 @@
 import uuid
 from decimal import Decimal
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -19,11 +20,19 @@ from app.services.payment_service import create_payment_and_enqueue
 from app.services.stripe_service import create_checkout_session
 
 
+_logger = logging.getLogger(__name__)
+
+
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
-_CREDIT_PACKAGES: dict[int, Decimal] = {
-    50: Decimal("50.00"),
+_CREDIT_PACKAGES: dict[str, Decimal] = {
+    "10.00": Decimal("10.00"),
+    "15.00": Decimal("15.00"),
+    "20.00": Decimal("20.00"),
+    "30.00": Decimal("30.00"),
+    "40.00": Decimal("40.00"),
+    "50.00": Decimal("50.00"),
 }
 
 
@@ -83,7 +92,8 @@ def create_stripe_checkout(
     _payload: dict = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
-    amount = _CREDIT_PACKAGES.get(req.credits)
+    credits_key = f"{req.credits:.2f}"
+    amount = _CREDIT_PACKAGES.get(credits_key)
     if amount is None:
         raise HTTPException(status_code=400, detail="Unsupported credits package")
 
@@ -91,6 +101,7 @@ def create_stripe_checkout(
         user_id=req.user_id,
         amount=amount,
         currency=req.currency,
+        credits=req.credits,
         status=PaymentStatus.PENDING,
         method=PaymentMethod.CREDIT_CARD,
         transaction_id=None,
@@ -111,6 +122,7 @@ def create_stripe_checkout(
             idempotency_key=payment.idempotency_key,
         )
     except Exception as exc:
+        _logger.exception("Failed to create Stripe session")
         db.delete(payment)
         db.commit()
         raise HTTPException(status_code=500, detail="Failed to create Stripe session") from exc

@@ -32,7 +32,7 @@ class PaymentRead(BaseModel):
 
 class StripeCheckoutCreateRequest(BaseModel):
     user_id: int = Field(gt=0)
-    credits: int = Field(gt=0)
+    credits: Decimal = Field(gt=0)
     currency: str = Field(default="BRL", min_length=3, max_length=3)
 
 

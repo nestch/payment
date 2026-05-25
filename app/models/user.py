@@ -5,9 +5,10 @@ from app.models.base import Base
 
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "userTable"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
-    email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True, index=True)
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column("userID", Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str | None] = mapped_column("name", String(100), nullable=True)
+    email: Mapped[str] = mapped_column("email", String(255), nullable=False, unique=True, index=True)
+    created_at: Mapped[int | None] = mapped_column("createdAt", Integer, nullable=True)
+    updated_at: Mapped[int | None] = mapped_column("updatedAt", Integer, nullable=True)

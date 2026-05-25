@@ -18,7 +18,7 @@ def create_checkout_session(
     user_id: int,
     amount: Decimal,
     currency: str,
-    credits: int,
+    credits: Decimal,
     idempotency_key: str,
 ) -> stripe.checkout.Session:
     if not settings.stripe_secret_key:

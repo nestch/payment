@@ -1,6 +1,8 @@
 import enum
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, Numeric, String, func
+from decimal import Decimal
+
+from sqlalchemy import BigInteger, DateTime, Enum, Index, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -24,10 +26,12 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
 
     amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="BRL")
+
+    credits: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
 
     status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
     method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
@@ -41,6 +45,8 @@ class Payment(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+    credited_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 Index("ix_payments_status", Payment.status)

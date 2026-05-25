@@ -1,6 +1,8 @@
 services:
   api:
     build: .
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
@@ -25,6 +27,8 @@ services:
 
   stripe-cli:
     image: stripe/stripe-cli:latest
+    env_file:
+      - .env
     command: ["listen", "--forward-to", "http://api:8000/webhooks/stripe"]
     environment:
       - STRIPE_API_KEY=${STRIPE_SECRET_KEY:-}
@@ -34,6 +38,8 @@ services:
   worker:
     build: .
     command: ["python", "-m", "app.workers.payment_worker"]
+    env_file:
+      - .env
     environment:
       - APP_ENV=dev
       - JWT_SECRET=${JWT_KEY:-nestch}
