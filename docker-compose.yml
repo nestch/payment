@@ -12,18 +12,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - JWT_SECRET=${JWT_KEY:-nestch}
       - JWT_ALGORITHM=${ALGORITHM:-HS256}
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=payments
-      - DB_USER=payments
-      - DB_PASSWORD=payments
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=payments
-      - RABBITMQ_PASS=payments
     depends_on:
       - rabbitmq
-      - db
 
   stripe-cli:
     image: stripe/stripe-cli:latest
@@ -44,18 +34,8 @@ services:
       - APP_ENV=dev
       - JWT_SECRET=${JWT_KEY:-nestch}
       - JWT_ALGORITHM=${ALGORITHM:-HS256}
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=payments
-      - DB_USER=payments
-      - DB_PASSWORD=payments
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=payments
-      - RABBITMQ_PASS=payments
     depends_on:
       - rabbitmq
-      - db
 
   rabbitmq:
     image: rabbitmq:3-management

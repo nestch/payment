@@ -12,6 +12,7 @@ _ZAVU_API_URL = "https://api.zavu.dev/v1/messages"
 
 def _send_whatsapp(to: str, text: str) -> None:
     if not settings.zavu_enabled:
+        _logger.info("ZAVU not enabled, skipping WhatsApp notification")
         return
 
     if not settings.zavu_api_key:
@@ -25,9 +26,11 @@ def _send_whatsapp(to: str, text: str) -> None:
             headers={"Authorization": f"Bearer {settings.zavu_api_key}"},
             timeout=10,
         )
+        _logger.info("ZAVU response status: %s, body: %s", response.status_code, response.text)
         response.raise_for_status()
     except Exception:
         _logger.exception("Failed to send WhatsApp notification to %s", to)
+        raise
 
 
 def notify_payment_confirmed(payment_id: int, amount: Decimal, currency: str) -> None:
