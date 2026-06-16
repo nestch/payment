@@ -6,11 +6,11 @@ class Settings(BaseSettings):
 
     app_env: str = "dev"
 
-    db_host: str = "localhost"
+    db_host: str
     db_port: int = 3306
-    db_name: str = "payments"
-    db_user: str = "payments"
-    db_password: str = "payments"
+    db_name: str
+    db_user: str
+    db_password: str
 
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
