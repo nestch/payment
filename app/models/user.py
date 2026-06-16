@@ -10,5 +10,6 @@ class User(Base):
     id: Mapped[int] = mapped_column("userID", Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column("name", String(100), nullable=True)
     email: Mapped[str] = mapped_column("email", String(255), nullable=False, unique=True, index=True)
+    userStatus: Mapped[int | None] = mapped_column("userStatus", Integer, nullable=True)
     created_at: Mapped[int | None] = mapped_column("createdAt", Integer, nullable=True)
     updated_at: Mapped[int | None] = mapped_column("updatedAt", Integer, nullable=True)

@@ -15,7 +15,7 @@ from app.schemas.payments import (
     StripeCheckoutCreateRequest,
     StripeCheckoutCreateResponse,
 )
-from app.security.jwt import require_auth
+from app.security.jwt import require_active_user
 from app.services.payment_service import create_payment_and_enqueue
 from app.services.stripe_service import create_checkout_session
 
@@ -39,7 +39,7 @@ _CREDIT_PACKAGES: dict[str, Decimal] = {
 @router.post("", response_model=PaymentCreateResponse)
 def create_payment(
     req: PaymentCreateRequest,
-    _payload: dict = Depends(require_auth),
+    _payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     try:
@@ -68,7 +68,7 @@ def create_payment(
 @router.get("/{payment_id}", response_model=PaymentRead)
 def get_payment(
     payment_id: int,
-    _payload: dict = Depends(require_auth),
+    _payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     payment: Payment | None = db.query(Payment).filter(Payment.id == payment_id).one_or_none()
@@ -89,7 +89,7 @@ def get_payment(
 @router.post("/stripe/checkout", response_model=StripeCheckoutCreateResponse)
 def create_stripe_checkout(
     req: StripeCheckoutCreateRequest,
-    _payload: dict = Depends(require_auth),
+    _payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     credits_key = f"{req.credits:.2f}"

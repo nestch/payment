@@ -11,7 +11,7 @@ from app.schemas.payments import (
     SimulateCheckoutRequest,
     SimulateCheckoutResponse,
 )
-from app.security.jwt import require_auth
+from app.security.jwt import require_active_user
 from app.services.simulate_service import (
     cancel_simulated_payment,
     confirm_simulated_payment,
@@ -43,7 +43,7 @@ def _apply_outcome(db: Session, payment: Payment, simulate: str) -> None:
 @router.post("/checkout", response_model=SimulateCheckoutResponse)
 def simulate_checkout(
     req: SimulateCheckoutRequest,
-    _payload: dict = Depends(require_auth),
+    _payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     """
@@ -76,7 +76,7 @@ def simulate_checkout(
 @router.post("/callback", response_model=SimulateCallbackResponse)
 def simulate_callback(
     req: SimulateCallbackRequest,
-    _payload: dict = Depends(require_auth),
+    _payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     """
