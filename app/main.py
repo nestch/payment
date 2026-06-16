@@ -12,6 +12,7 @@ import app.models.user
 from app.models.payment import Payment
 from app.routes.auth import router as auth_router
 from app.routes.payments import router as payments_router
+from app.routes.simulate import router as simulate_router
 from app.routes.webhook import router as webhooks_router
 
 
@@ -33,6 +34,7 @@ def _startup():
 
 app.include_router(auth_router)
 app.include_router(payments_router)
+app.include_router(simulate_router)
 app.include_router(webhooks_router)
 
 

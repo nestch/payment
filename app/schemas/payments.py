@@ -46,3 +46,40 @@ class StripeCheckoutCreateResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+
+
+# ---------------------------------------------------------------------------
+# Simulate endpoints
+# ---------------------------------------------------------------------------
+
+SimulateOutcome = Literal["success", "failure", "cancel"]
+
+
+class SimulateCheckoutRequest(BaseModel):
+    user_id: int = Field(gt=0)
+    credits: Decimal = Field(gt=0)
+    currency: str = Field(default="BRL", min_length=3, max_length=3)
+    simulate: SimulateOutcome = Field(
+        default="success",
+        description="'success' → CONFIRMED, 'failure' → FAILED, 'cancel' → CANCELED",
+    )
+
+
+class SimulateCheckoutResponse(BaseModel):
+    payment_id: int
+    status: PaymentStatus
+    simulated_event: str
+    transaction_id: str | None
+
+
+class SimulateCallbackRequest(BaseModel):
+    payment_id: int = Field(gt=0)
+    simulate: SimulateOutcome = Field(
+        description="'success' → CONFIRMED, 'failure' → FAILED, 'cancel' → CANCELED",
+    )
+
+
+class SimulateCallbackResponse(BaseModel):
+    payment_id: int
+    status: PaymentStatus
+    simulated_event: str
