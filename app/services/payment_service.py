@@ -9,8 +9,8 @@ from app.messaging.rabbitmq import publish_message
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
 
 
-def _make_idempotency_key(user_id: int, amount: Decimal, currency: str, method: str) -> str:
-    raw = f"{user_id}:{amount}:{currency}:{method}".encode("utf-8")
+def _make_idempotency_key(userID: int, amount: Decimal, currency: str, method: str) -> str:
+    raw = f"{userID}:{amount}:{currency}:{method}".encode("utf-8")
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -18,19 +18,19 @@ def create_payment_and_enqueue(
     db: Session,
     channel,
     *,
-    user_id: int,
+    userID: int,
     amount: Decimal,
     currency: str,
     method: str,
 ) -> Payment:
-    idempotency_key = _make_idempotency_key(user_id, amount, currency, method)
+    idempotency_key = _make_idempotency_key(userID, amount, currency, method)
 
     existing = db.query(Payment).filter(Payment.idempotency_key == idempotency_key).one_or_none()
     if existing is not None:
         return existing
 
     payment = Payment(
-        user_id=user_id,
+        userID=userID,
         amount=amount,
         currency=currency,
         status=PaymentStatus.PENDING,
@@ -51,7 +51,7 @@ def create_payment_and_enqueue(
         routing_key=settings.rabbitmq_queue,
         payload={
             "payment_id": payment.id,
-            "user_id": payment.user_id,
+            "userID": payment.userID,
             "amount": str(payment.amount),
             "currency": payment.currency,
             "method": payment.method.value,

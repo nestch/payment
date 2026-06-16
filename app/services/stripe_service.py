@@ -15,7 +15,7 @@ def _to_stripe_amount(amount: Decimal) -> int:
 def create_checkout_session(
     *,
     payment_id: int,
-    user_id: int,
+    userID: int,
     amount: Decimal,
     currency: str,
     credits: Decimal,
@@ -43,7 +43,7 @@ def create_checkout_session(
         cancel_url=settings.stripe_cancel_url,
         metadata={
             "payment_id": str(payment_id),
-            "user_id": str(user_id),
+            "userID": str(userID),
             "credits": str(credits),
         },
         client_reference_id=str(payment_id),

@@ -23,9 +23,9 @@ def create_token(req: TokenCreateRequest):
     expires_at = datetime.now(tz=timezone.utc) + timedelta(minutes=expire_minutes)
 
     payload: dict = {"exp": int(expires_at.timestamp())}
-    if req.user_id is not None:
-        payload["user_id"] = req.user_id
-        payload["sub"] = str(req.user_id)
+    if req.userID is not None:
+        payload["userID"] = req.userID
+        payload["sub"] = str(req.userID)
 
     token = jwt.encode(payload, _JWT_SECRET, algorithm=_JWT_ALGORITHM)
 

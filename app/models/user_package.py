@@ -17,7 +17,7 @@ class UserPackage(Base):
     __tablename__ = "user_packages"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    userID: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     package_id: Mapped[int] = mapped_column(ForeignKey("payment_packages.id"), nullable=False, index=True)
     payment_id: Mapped[int] = mapped_column(ForeignKey("payments.id"), nullable=False, index=True)
 
@@ -31,4 +31,4 @@ class UserPackage(Base):
     )
 
 
-Index("ix_user_packages_user_payment", UserPackage.user_id, UserPackage.payment_id)
+Index("ix_user_packages_user_payment", UserPackage.userID, UserPackage.payment_id)

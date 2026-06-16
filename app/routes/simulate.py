@@ -55,7 +55,7 @@ def simulate_checkout(
     try:
         payment = create_simulated_payment(
             db,
-            user_id=req.user_id,
+            userID=req.userID,
             credits=req.credits,
             currency=req.currency,
         )

@@ -50,7 +50,7 @@ def create_payment(
         payment = create_payment_and_enqueue(
             db,
             channel,
-            user_id=req.user_id,
+            userID=req.userID,
             amount=req.amount,
             currency=req.currency,
             method=req.method,
@@ -77,7 +77,7 @@ def get_payment(
 
     return PaymentRead(
         id=payment.id,
-        user_id=payment.user_id,
+        userID=payment.userID,
         amount=payment.amount,
         currency=payment.currency,
         status=payment.status.value,
@@ -98,7 +98,7 @@ def create_stripe_checkout(
         raise HTTPException(status_code=400, detail="Unsupported credits package")
 
     payment = Payment(
-        user_id=req.user_id,
+        userID=req.userID,
         amount=amount,
         currency=req.currency,
         credits=req.credits,
@@ -115,7 +115,7 @@ def create_stripe_checkout(
     try:
         session = create_checkout_session(
             payment_id=payment.id,
-            user_id=req.user_id,
+            userID=req.userID,
             amount=amount,
             currency=req.currency,
             credits=req.credits,

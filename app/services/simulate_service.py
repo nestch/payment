@@ -22,7 +22,7 @@ _CREDIT_PACKAGES: dict[str, Decimal] = {
 def create_simulated_payment(
     db: Session,
     *,
-    user_id: int,
+    userID: int,
     credits: Decimal,
     currency: str,
 ) -> Payment:
@@ -32,7 +32,7 @@ def create_simulated_payment(
         raise ValueError(f"Unsupported credits package: {credits_key}")
 
     payment = Payment(
-        user_id=user_id,
+        userID=userID,
         amount=amount,
         currency=currency,
         credits=credits,
@@ -58,11 +58,11 @@ def confirm_simulated_payment(db: Session, payment: Payment) -> None:
         db.execute(
             text(
                 "INSERT IGNORE INTO creditsLedger "
-                "(user_id, payment_id, credits, amount_paid, stripe_event_id) "
-                "VALUES (:user_id, :payment_id, :credits, :amount_paid, :stripe_event_id)"
+                "(userID, payment_id, credits, amount_paid, stripe_event_id) "
+                "VALUES (:userID, :payment_id, :credits, :amount_paid, :stripe_event_id)"
             ),
             {
-                "user_id": payment.user_id,
+                "userID": payment.userID,
                 "payment_id": payment.id,
                 "credits": credits_val,
                 "amount_paid": payment.amount,
@@ -73,9 +73,9 @@ def confirm_simulated_payment(db: Session, payment: Payment) -> None:
             text(
                 "UPDATE userTable "
                 "SET credit = COALESCE(credit, 0) + :credits "
-                "WHERE userID = :user_id"
+                "WHERE userID = :userID"
             ),
-            {"credits": credits_val, "user_id": payment.user_id},
+            {"credits": credits_val, "userID": payment.userID},
         )
         db.execute(
             text("UPDATE paymentsTable SET credited_at = NOW() WHERE id = :payment_id"),

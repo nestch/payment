@@ -9,7 +9,7 @@ PaymentStatus = Literal["PENDING", "CONFIRMED", "FAILED", "CANCELED"]
 
 
 class PaymentCreateRequest(BaseModel):
-    user_id: int = Field(gt=0)
+    userID: int = Field(gt=0)
     amount: Decimal = Field(gt=0)
     currency: str = Field(default="BRL", min_length=3, max_length=3)
     method: PaymentMethod
@@ -22,7 +22,7 @@ class PaymentCreateResponse(BaseModel):
 
 class PaymentRead(BaseModel):
     id: int
-    user_id: int
+    userID: int
     amount: Decimal
     currency: str
     status: PaymentStatus
@@ -31,7 +31,7 @@ class PaymentRead(BaseModel):
 
 
 class StripeCheckoutCreateRequest(BaseModel):
-    user_id: int = Field(gt=0)
+    userID: int = Field(gt=0)
     credits: Decimal = Field(gt=0)
     currency: str = Field(default="BRL", min_length=3, max_length=3)
 
@@ -56,7 +56,7 @@ SimulateOutcome = Literal["success", "failure", "cancel"]
 
 
 class SimulateCheckoutRequest(BaseModel):
-    user_id: int = Field(gt=0)
+    userID: int = Field(gt=0)
     credits: Decimal = Field(gt=0)
     currency: str = Field(default="BRL", min_length=3, max_length=3)
     simulate: SimulateOutcome = Field(

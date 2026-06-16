@@ -26,7 +26,7 @@ class Payment(Base):
     __tablename__ = "paymentsTable"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    userID: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
 
     amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="BRL")

@@ -91,11 +91,11 @@ async def stripe_webhook(
         if credits_val > 0 and payment.credited_at is None:
             db.execute(
                 text(
-                    "INSERT IGNORE INTO creditsLedger (user_id, payment_id, credits, amount_paid, stripe_event_id) "
-                    "VALUES (:user_id, :payment_id, :credits, :amount_paid, :stripe_event_id)"
+                    "INSERT IGNORE INTO creditsLedger (userID, payment_id, credits, amount_paid, stripe_event_id) "
+                    "VALUES (:userID, :payment_id, :credits, :amount_paid, :stripe_event_id)"
                 ),
                 {
-                    "user_id": payment.user_id,
+                    "userID": payment.userID,
                     "payment_id": payment.id,
                     "credits": credits_val,
                     "amount_paid": payment.amount,
@@ -106,9 +106,9 @@ async def stripe_webhook(
                 text(
                     "UPDATE userTable "
                     "SET credit = COALESCE(credit, 0) + :credits "
-                    "WHERE userID = :user_id"
+                    "WHERE userID = :userID"
                 ),
-                {"credits": credits_val, "user_id": payment.user_id},
+                {"credits": credits_val, "userID": payment.userID},
             )
             db.execute(
                 text("UPDATE paymentsTable SET credited_at = NOW() WHERE id = :payment_id"),
