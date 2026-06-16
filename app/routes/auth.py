@@ -19,7 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/token", response_model=TokenCreateResponse)
 def create_token(req: TokenCreateRequest):
-    expire_minutes = req.expires_in_minutes if req.expires_in_minutes is not None else _ACCESS_TOKEN_EXPIRE_MINUTES
+    expire_minutes = req.expires_in_minutes
     expires_at = datetime.now(tz=timezone.utc) + timedelta(minutes=expire_minutes)
 
     payload: dict = {"exp": int(expires_at.timestamp())}
