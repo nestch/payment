@@ -29,7 +29,7 @@ def _startup():
                 break
             except OperationalError:
                 time.sleep(1)
-        Base.metadata.drop_all(bind=engine, tables=[Payment.__table__])
+        # Base.metadata.drop_all(bind=engine, tables=[Payment.__table__])
         Base.metadata.create_all(bind=engine, tables=[Payment.__table__])
 
 app.include_router(auth_router)
