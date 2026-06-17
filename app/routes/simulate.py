@@ -43,7 +43,7 @@ def _apply_outcome(db: Session, payment: Payment, simulate: str) -> None:
 @router.post("/checkout", response_model=SimulateCheckoutResponse)
 def simulate_checkout(
     req: SimulateCheckoutRequest,
-    _payload: dict = Depends(require_active_user),
+    payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     """
@@ -55,7 +55,7 @@ def simulate_checkout(
     try:
         payment = create_simulated_payment(
             db,
-            userID=req.userID,
+            userID=payload["userID"],
             credits=req.credits,
             currency=req.currency,
         )

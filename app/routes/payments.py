@@ -39,7 +39,7 @@ _CREDIT_PACKAGES: dict[str, Decimal] = {
 @router.post("", response_model=PaymentCreateResponse)
 def create_payment(
     req: PaymentCreateRequest,
-    _payload: dict = Depends(require_active_user),
+    payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     try:
@@ -50,7 +50,7 @@ def create_payment(
         payment = create_payment_and_enqueue(
             db,
             channel,
-            userID=req.userID,
+            userID=payload["userID"],
             amount=req.amount,
             currency=req.currency,
             method=req.method,
@@ -89,7 +89,7 @@ def get_payment(
 @router.post("/stripe/checkout", response_model=StripeCheckoutCreateResponse)
 def create_stripe_checkout(
     req: StripeCheckoutCreateRequest,
-    _payload: dict = Depends(require_active_user),
+    payload: dict = Depends(require_active_user),
     db: Session = Depends(get_db_session),
 ):
     credits_key = f"{req.credits:.2f}"
@@ -98,7 +98,7 @@ def create_stripe_checkout(
         raise HTTPException(status_code=400, detail="Unsupported credits package")
 
     payment = Payment(
-        userID=req.userID,
+        userID=payload["userID"],
         amount=amount,
         currency=req.currency,
         credits=req.credits,
@@ -115,7 +115,7 @@ def create_stripe_checkout(
     try:
         session = create_checkout_session(
             payment_id=payment.id,
-            userID=req.userID,
+            userID=payload["userID"],
             amount=amount,
             currency=req.currency,
             credits=req.credits,
