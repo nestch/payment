@@ -28,6 +28,7 @@ _OUTCOME_EVENT = {
     "success": "checkout.session.completed",
     "failure": "checkout.session.async_payment_failed",
     "cancel": "checkout.session.expired",
+    "pending": "checkout.session.pending",
 }
 
 
@@ -51,6 +52,7 @@ def simulate_checkout(
     - simulate='success'  → status CONFIRMED + creditsLedger alimentado
     - simulate='failure'  → status FAILED
     - simulate='cancel'   → status CANCELED
+    - simulate='pending'  → status PENDING
     """
     try:
         payment = create_simulated_payment(
@@ -62,8 +64,9 @@ def simulate_checkout(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    _apply_outcome(db, payment, req.simulate)
-    db.refresh(payment)
+    if req.simulate != "pending":
+        _apply_outcome(db, payment, req.simulate)
+        db.refresh(payment)
 
     return SimulateCheckoutResponse(
         payment_id=payment.id,
@@ -82,7 +85,7 @@ def simulate_callback(
     """
     Aplica um desfecho simulado sobre um Payment já existente (PENDING).
     Útil para simular a progressão de status em etapas separadas:
-      1. POST /simulate/checkout  → cria PENDING
+      1. POST /payments  → cria PENDING
       2. POST /simulate/callback  → confirma/falha/cancela
     """
     payment: Payment | None = db.query(Payment).filter(Payment.id == req.payment_id).one_or_none()

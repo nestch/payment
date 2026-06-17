@@ -4,14 +4,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-PaymentMethod = Literal["CREDIT_CARD", "PIX", "BOLETO", "PAYPAL"]
+PaymentMethod = Literal["PIX", "BOLETO", "PAYPAL", "CREDIT_CARD"]
 PaymentStatus = Literal["PENDING", "CONFIRMED", "FAILED", "CANCELED"]
 
 
 class PaymentCreateRequest(BaseModel):
     amount: Decimal = Field(gt=0)
     currency: str = Field(default="BRL", min_length=3, max_length=3)
-    method: PaymentMethod
+    method: PaymentMethod = Field(default="PIX")
 
 
 class PaymentCreateResponse(BaseModel):
@@ -50,7 +50,7 @@ class HealthResponse(BaseModel):
 # Simulate endpoints
 # ---------------------------------------------------------------------------
 
-SimulateOutcome = Literal["success", "failure", "cancel"]
+SimulateOutcome = Literal["success", "failure", "cancel", "pending"]
 
 
 class SimulateCheckoutRequest(BaseModel):
@@ -58,7 +58,7 @@ class SimulateCheckoutRequest(BaseModel):
     currency: str = Field(default="BRL", min_length=3, max_length=3)
     simulate: SimulateOutcome = Field(
         default="success",
-        description="'success' → CONFIRMED, 'failure' → FAILED, 'cancel' → CANCELED",
+        description="'success' → CONFIRMED, 'failure' → FAILED, 'cancel' → CANCELED, 'pending' → PENDING",
     )
 
 
