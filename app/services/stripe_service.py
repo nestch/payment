@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 
 import stripe
+from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.domain.credits import CREDIT_PACKAGES
+from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.repositories.payment_repository import PaymentRepository
 
 
 def _to_stripe_amount(amount: Decimal) -> int:
@@ -51,6 +56,51 @@ def create_checkout_session(
     )
 
     return session
+
+
+def create_stripe_checkout_payment(
+    db: Session,
+    *,
+    userID: int,
+    credits: Decimal,
+    currency: str,
+) -> tuple[Payment, stripe.checkout.Session]:
+    credits_key = f"{credits:.2f}"
+    amount = CREDIT_PACKAGES.get(credits_key)
+    if amount is None:
+        raise ValueError(f"Unsupported credits package: {credits_key}")
+
+    repo = PaymentRepository(db)
+
+    payment = Payment(
+        userID=userID,
+        amount=amount,
+        currency=currency,
+        credits=credits,
+        status=PaymentStatus.PENDING,
+        method=PaymentMethod.CREDIT_CARD,
+        transaction_id=None,
+        idempotency_key=uuid.uuid4().hex,
+    )
+    repo.save(payment)
+
+    try:
+        session = create_checkout_session(
+            payment_id=payment.id,
+            userID=userID,
+            amount=amount,
+            currency=currency,
+            credits=credits,
+            idempotency_key=payment.idempotency_key,
+        )
+    except Exception:
+        repo.delete(payment)
+        raise
+
+    payment.transaction_id = session.id
+    repo.save(payment)
+
+    return payment, session
 
 
 def construct_webhook_event(*, payload: bytes, stripe_signature: str) -> stripe.Event:

@@ -3,20 +3,10 @@ from __future__ import annotations
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.domain.credits import credit_user, resolve_amount
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
-
-
-_CREDIT_PACKAGES: dict[str, Decimal] = {
-    "10.00": Decimal("10.00"),
-    "15.00": Decimal("15.00"),
-    "20.00": Decimal("20.00"),
-    "30.00": Decimal("30.00"),
-    "40.00": Decimal("40.00"),
-    "50.00": Decimal("50.00"),
-}
 
 
 def create_simulated_payment(
@@ -26,10 +16,7 @@ def create_simulated_payment(
     credits: Decimal,
     currency: str,
 ) -> Payment:
-    credits_key = f"{credits:.2f}"
-    amount = _CREDIT_PACKAGES.get(credits_key)
-    if amount is None:
-        raise ValueError(f"Unsupported credits package: {credits_key}")
+    amount = resolve_amount(credits)
 
     payment = Payment(
         userID=userID,
@@ -52,35 +39,7 @@ def confirm_simulated_payment(db: Session, payment: Payment) -> None:
     payment.status = PaymentStatus.CONFIRMED
     payment.transaction_id = f"sim_pix_{uuid.uuid4().hex[:16]}"
 
-    credits_val: Decimal = payment.credits if payment.credits is not None else Decimal("0")
-
-    if credits_val > 0 and payment.credited_at is None:
-        db.execute(
-            text(
-                "INSERT IGNORE INTO creditsLedger "
-                "(userID, payment_id, credits, amount_paid, stripe_event_id) "
-                "VALUES (:userID, :payment_id, :credits, :amount_paid, :stripe_event_id)"
-            ),
-            {
-                "userID": payment.userID,
-                "payment_id": payment.id,
-                "credits": credits_val,
-                "amount_paid": payment.amount,
-                "stripe_event_id": f"sim_evt_{uuid.uuid4().hex}",
-            },
-        )
-        db.execute(
-            text(
-                "UPDATE userTable "
-                "SET credit = COALESCE(credit, 0) + :credits "
-                "WHERE userID = :userID"
-            ),
-            {"credits": credits_val, "userID": payment.userID},
-        )
-        db.execute(
-            text("UPDATE paymentsTable SET credited_at = NOW() WHERE id = :payment_id"),
-            {"payment_id": payment.id},
-        )
+    credit_user(db, payment=payment, stripe_event_id=f"sim_evt_{uuid.uuid4().hex}")
 
     db.add(payment)
     db.commit()

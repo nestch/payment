@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.messaging.rabbitmq import publish_message
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.repositories.payment_repository import PaymentRepository
 
 
 def _make_idempotency_key(userID: int, amount: Decimal, currency: str, method: str) -> str:
@@ -25,7 +26,9 @@ def create_payment_and_enqueue(
 ) -> Payment:
     idempotency_key = _make_idempotency_key(userID, amount, currency, method)
 
-    existing = db.query(Payment).filter(Payment.idempotency_key == idempotency_key).one_or_none()
+    repo = PaymentRepository(db)
+
+    existing = repo.get_by_idempotency_key(idempotency_key)
     if existing is not None:
         return existing
 
@@ -38,10 +41,7 @@ def create_payment_and_enqueue(
         transaction_id=None,
         idempotency_key=idempotency_key,
     )
-
-    db.add(payment)
-    db.commit()
-    db.refresh(payment)
+    repo.save(payment)
 
     message_id = str(uuid.uuid4())
     correlation_id = str(payment.id)

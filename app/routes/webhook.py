@@ -1,11 +1,10 @@
-from decimal import Decimal
-
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
-from app.models.payment import Payment, PaymentStatus
+from app.domain.credits import credit_user
+from app.models.payment import PaymentStatus
+from app.repositories.payment_repository import PaymentRepository
 from app.services.stripe_service import construct_webhook_event
 
 
@@ -67,7 +66,8 @@ async def stripe_webhook(
         return {"received": True}
 
     # Busca o Payment no nosso banco local
-    payment: Payment | None = db.query(Payment).filter(Payment.id == payment_id_int).one_or_none()
+    repo = PaymentRepository(db)
+    payment = repo.get_by_id(payment_id_int)
     if payment is None:
         return {"received": True}
 
@@ -79,41 +79,8 @@ async def stripe_webhook(
             # Se existir, guardamos o PaymentIntent do Stripe para rastreio
             payment.transaction_id = obj.get("payment_intent")
 
-        # Atualiza o crédito do usuário no banco principal (nestch_db).
-        # Premissa: userTable.credit é DOUBLE (numérico com casas decimais).
-        credits_str = str(payment.credits) if payment.credits is not None else metadata.get("credits")
-        try:
-            credits_val = Decimal(credits_str) if credits_str is not None else Decimal("0")
-        except Exception:
-            credits_val = Decimal("0")
-
         # Idempotência: o Stripe pode reenviar eventos; creditamos apenas uma vez por Payment.
-        if credits_val > 0 and payment.credited_at is None:
-            db.execute(
-                text(
-                    "INSERT IGNORE INTO creditsLedger (userID, payment_id, credits, amount_paid, stripe_event_id) "
-                    "VALUES (:userID, :payment_id, :credits, :amount_paid, :stripe_event_id)"
-                ),
-                {
-                    "userID": payment.userID,
-                    "payment_id": payment.id,
-                    "credits": credits_val,
-                    "amount_paid": payment.amount,
-                    "stripe_event_id": event_dict.get("id"),
-                },
-            )
-            db.execute(
-                text(
-                    "UPDATE userTable "
-                    "SET credit = COALESCE(credit, 0) + :credits "
-                    "WHERE userID = :userID"
-                ),
-                {"credits": credits_val, "userID": payment.userID},
-            )
-            db.execute(
-                text("UPDATE paymentsTable SET credited_at = NOW() WHERE id = :payment_id"),
-                {"payment_id": payment.id},
-            )
+        credit_user(db, payment=payment, stripe_event_id=event_dict.get("id") or "")
 
     elif event_type in {"checkout.session.async_payment_failed", "payment_intent.payment_failed"}:
         # Falha no pagamento
